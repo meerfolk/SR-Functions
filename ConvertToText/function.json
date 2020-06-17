@@ -1,0 +1,13 @@
+{
+  "bindings": [
+    {
+      "name": "myBlob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "samples-workitems/{name}",
+      "connection": "SRFilesConnection"
+    }
+  ],
+  "scriptFile": "../dist/ConvertToText/index.js"
+}
+
