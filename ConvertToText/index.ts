@@ -11,9 +11,13 @@ const blobTrigger: AzureFunction = async (context: Context, myBlob: any): Promis
         Blob Size: ${myBlob.length},
     `);
 
-    const path = expectAndGet<string>(context.bindingData.path, 'Blob path not found');
+    context.log(context.bindingData);
 
-    const body: RequestBodyDto = getRequestBody(path, 'testName', 'testUrl');
+    const uri = expectAndGet<string>(context.bindingData.uri, 'Blob uri not found');
+
+    const body: RequestBodyDto = getRequestBody(uri, 'testName', 'testUrl');
+
+    context.log(body);
 };
 
 export default blobTrigger;
