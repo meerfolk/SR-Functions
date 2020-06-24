@@ -16,22 +16,22 @@ class RequestBodyPropertiesDto {
 }
 
 export class RequestBodyDto {
-    recordingsUrl: string;
+    RecordingsUrl: string;
 
-    locale: string;
+    Locale: string;
 
-    name: string;
+    Name: string;
 
-    description: string;
+    Description: string;
 
-    properties: RequestBodyPropertiesDto;
+    Properties: RequestBodyPropertiesDto;
 
     constructor(recordingsUrl: string, name: string, resultContainerUrl: string) {
-        this.recordingsUrl = recordingsUrl;
-        this.locale = 'ru-RU';
-        this.name = name;
-        this.description = 'Description';
-        this.properties = new RequestBodyPropertiesDto(resultContainerUrl);
+        this.RecordingsUrl = recordingsUrl;
+        this.Locale = 'ru-RU';
+        this.Name = name;
+        this.Description = 'Description';
+        this.Properties = new RequestBodyPropertiesDto(resultContainerUrl);
     }
 }
 

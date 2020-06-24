@@ -1,4 +1,5 @@
 import { AzureFunction, Context } from '@azure/functions';
+import axios from 'axios';
 
 import { getRequestBody, RequestBodyDto } from './getRequestBody';
 
@@ -13,11 +14,23 @@ const blobTrigger: AzureFunction = async (context: Context, myBlob: any): Promis
 
     context.log(context.bindingData);
 
-    const uri = expectAndGet<string>(context.bindingData.uri, 'Blob uri not found');
+    const uri = expectAndGet<string>(context.bindingData.uri, 'Blob uri reuired');
+    const srServiceRegion = expectAndGet<string>(process.env.SRServiceRegion, 'SR serivce region reuired');
+    const srServiceSubscriptionKey = expectAndGet<string>(
+        process.env.SRServiceSubscriptionKey,
+        'SR serivce subscriptions key required',
+    );
+    const blobStorageSas = expectAndGet<string>(process.env.SRBlobStorageSas, 'SR blob storage sas required');
 
-    const body: RequestBodyDto = getRequestBody(uri, 'testName', 'testUrl');
+    const body: RequestBodyDto = getRequestBody(uri, 'testName', blobStorageSas);
 
-    context.log(body);
+    const result = await axios.post(`https://${srServiceRegion}.cris.ai/api/speechtotext/v2.0/Transcriptions`, body, {
+        headers: {
+            'Ocp-Apim-Subscription-Key': srServiceSubscriptionKey,
+        },
+    });
+
+    context.log(result.headers);
 };
 
 export default blobTrigger;
