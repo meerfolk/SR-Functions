@@ -1,4 +1,10 @@
 import { AzureFunction, Context } from '@azure/functions';
+import {
+    generateBlobSASQueryParameters,
+    ContainerSASPermissions,
+    SASProtocol,
+    StorageSharedKeyCredential,
+} from '@azure/storage-blob';
 import axios from 'axios';
 
 import { getRequestBody, RequestBodyDto } from './getRequestBody';
@@ -22,15 +28,47 @@ const blobTrigger: AzureFunction = async (context: Context, myBlob: any): Promis
     );
     const blobStorageSas = expectAndGet<string>(process.env.SRBlobStorageSas, 'SR blob storage sas required');
 
-    const body: RequestBodyDto = getRequestBody(uri, 'testName', blobStorageSas);
+    const blobContainerName = expectAndGet<string>(
+        process.env.SRStorageContainerName,
+        'SR blob storage container name required',
+    );
+
+    const blobStorageAccount = expectAndGet<string>(
+        process.env.SRBlobStorageAccount,
+        'SR blob storage account required',
+    );
+    const blobStorageKey = expectAndGet<string>(process.env.SRBlobStorageKey, 'SR blob storage key required');
+
+    const blobStorageContainerUrl = uri.substring(0, uri.lastIndexOf('/'));
+
+    const startsOn = new Date();
+    const expiresOn = new Date(startsOn);
+    expiresOn.setDate(expiresOn.getDate() + 1);
+
+    const sharedKeyCredentials = new StorageSharedKeyCredential(blobStorageAccount, blobStorageKey);
+
+    const containerSas = generateBlobSASQueryParameters(
+        {
+            containerName: blobContainerName,
+            permissions: ContainerSASPermissions.parse('w'),
+            startsOn,
+            expiresOn,
+            protocol: SASProtocol.Https,
+        },
+        sharedKeyCredentials,
+    );
+
+    const body: RequestBodyDto = getRequestBody(
+        `${uri}?${blobStorageSas}`,
+        'testName',
+        `${blobStorageContainerUrl}?${containerSas}`,
+    );
 
     const result = await axios.post(`https://${srServiceRegion}.cris.ai/api/speechtotext/v2.0/Transcriptions`, body, {
         headers: {
             'Ocp-Apim-Subscription-Key': srServiceSubscriptionKey,
         },
     });
-
-    context.log(result.headers);
 };
 
 export default blobTrigger;
