@@ -10,14 +10,13 @@ import axios from 'axios';
 import { getRequestBody, RequestBodyDto } from './getRequestBody';
 
 import { expectAndGet } from '../Shared';
+import { getUUIDFromUrl } from './getUUIDFromUrl';
 
 const blobTrigger: AzureFunction = async (context: Context): Promise<void> => {
     context.log(`
         Blob trigger function processed blob 
         Name:' ${context.bindingData.name},
     `);
-
-    context.log(context.bindingData);
 
     const uri = expectAndGet<string>(context.bindingData.uri, 'Blob uri reuired');
     const srServiceRegion = expectAndGet<string>(process.env.SRServiceRegion, 'SR serivce region reuired');
@@ -72,9 +71,10 @@ const blobTrigger: AzureFunction = async (context: Context): Promise<void> => {
     const location = expectAndGet<string>(result.headers.location, 'location header not found');
 
     const filesTable = JSON.parse(context.bindings.filesTable || '{}');
+    const srUuid = getUUIDFromUrl(location);
 
     return {
-        [context.bindingData.name]: location.substring(location.lastIndexOf('/')),
+        [srUuid]: context.bindingData.name,
         ...filesTable,
     };
 };

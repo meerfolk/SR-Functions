@@ -1,0 +1,19 @@
+{
+    "bindings": [
+        {
+            "name": "myBlob",
+            "type": "blobTrigger",
+            "direction": "in",
+            "path": "srfiles/{name}.json",
+            "connection": "SRBlobStorageConnection"
+        },
+        {
+            "name": "filesTable",
+            "type": "blob",
+            "direction": "in",
+            "path": "srfiles/files_table",
+            "connection": "SRBlobStorageConnection"
+        }
+    ],
+    "scriptFile": "../dist/ConvertToText/index.js"
+}
