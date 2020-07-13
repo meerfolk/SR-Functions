@@ -1,17 +1,22 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import { AzureFunction, Context } from '@azure/functions';
 
-import { expectAndGet } from '../Shared';
+import { expectAndGet, tryCatchLogWrapper } from '../Shared';
 import { getUUIDFromFileName } from './getUUIDFromFileName';
 
 type Result = {
-    AudioFileResults: {
-        CombinedResults: {
-            Display: string;
-        };
-    };
+    AudioFileResults: [
+        {
+            CombinedResults: [
+                {
+                    Display: string;
+                },
+            ];
+        },
+    ];
 };
-const blobTrigger: AzureFunction = async (context: Context, myBlob: Result): Promise<void> => {
+
+const blobTrigger: AzureFunction = async (context: Context, myBlob: Buffer): Promise<void> => {
     const blobName = expectAndGet<string>(context.bindingData.name, 'Blob name required');
 
     const srUuid = getUUIDFromFileName(blobName);
@@ -31,14 +36,22 @@ const blobTrigger: AzureFunction = async (context: Context, myBlob: Result): Pro
     );
 
     const blobServiceClient = new BlobServiceClient(
-        `https://${blobStorageAccount}.blob.core.windows.net${blobStorageSas}`,
+        `https://${blobStorageAccount}.blob.core.windows.net?${blobStorageSas}`,
     );
     const containerClient = blobServiceClient.getContainerClient(blobContainerName);
 
-    const resultBlobBody = expectAndGet(
-        myBlob.AudioFileResults.CombinedResults.Display,
+    const blobObj = tryCatchLogWrapper<Result>(
+        context,
+        () => JSON.parse(myBlob.toString('utf8')),
+        'Failed parsing blob buffer to string',
+    );
+
+    const combinedResults = expectAndGet(
+        blobObj.AudioFileResults[0].CombinedResults,
         `Can't find display in combined result`,
     );
+
+    const resultBlobBody = combinedResults.reduce((memo, item) => memo + `${item.Display}\n`, '');
 
     await containerClient.uploadBlockBlob(`${txtBlobName}.txt`, resultBlobBody, resultBlobBody.length);
 };

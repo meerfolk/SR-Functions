@@ -9,7 +9,7 @@ import axios from 'axios';
 
 import { getRequestBody, RequestBodyDto } from './getRequestBody';
 
-import { expectAndGet, tryCatchLogWrapper } from '../Shared';
+import { expectAndGet } from '../Shared';
 import { getUUIDFromUrl } from './getUUIDFromUrl';
 
 const blobTrigger: AzureFunction = async (context: Context): Promise<string> => {
@@ -19,11 +19,14 @@ const blobTrigger: AzureFunction = async (context: Context): Promise<string> => 
     `);
 
     const uri = expectAndGet<string>(context.bindingData.uri, 'Blob uri reuired');
+
     const srServiceRegion = expectAndGet<string>(process.env.SRServiceRegion, 'SR serivce region reuired');
+
     const srServiceSubscriptionKey = expectAndGet<string>(
         process.env.SRServiceSubscriptionKey,
         'SR serivce subscriptions key required',
     );
+
     const blobStorageSas = expectAndGet<string>(process.env.SRBlobStorageSas, 'SR blob storage sas required');
 
     const blobContainerName = expectAndGet<string>(
@@ -35,11 +38,13 @@ const blobTrigger: AzureFunction = async (context: Context): Promise<string> => 
         process.env.SRBlobStorageAccount,
         'SR blob storage account required',
     );
+
     const blobStorageKey = expectAndGet<string>(process.env.SRBlobStorageKey, 'SR blob storage key required');
 
     const blobStorageContainerUrl = uri.substring(0, uri.lastIndexOf('/'));
 
     const startsOn = new Date();
+
     const expiresOn = new Date(startsOn);
     expiresOn.setDate(expiresOn.getDate() + 1);
 
@@ -70,22 +75,14 @@ const blobTrigger: AzureFunction = async (context: Context): Promise<string> => 
 
     const location = expectAndGet<string>(result.headers.location, 'location header not found');
 
-    const filesTable = tryCatchLogWrapper(
-        context,
-        () => JSON.parse(context.bindings.filesTable || '{}'),
-        'Fail to parse files table ',
-    );
+    const filesTable = context.bindings.filesTable || {};
+
     const srUuid = getUUIDFromUrl(location);
 
-    return tryCatchLogWrapper(
-        context,
-        () =>
-            JSON.stringify({
-                [srUuid]: context.bindingData.name,
-                ...filesTable,
-            }),
-        'Fail to stringify files table',
-    );
+    return {
+        [srUuid]: context.bindingData.name,
+        ...filesTable,
+    };
 };
 
 export default blobTrigger;
