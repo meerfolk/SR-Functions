@@ -4,7 +4,21 @@
             "name": "myBlob",
             "type": "blobTrigger",
             "direction": "in",
-            "path": "srfiles/{name}",
+            "path": "srfiles/{name}.mp3",
+            "connection": "SRBlobStorageConnection"
+        },
+        {
+            "name": "filesTable",
+            "type": "blob",
+            "direction": "in",
+            "path": "srfiles/files_table",
+            "connection": "SRBlobStorageConnection"
+        },
+        {
+            "name": "$return",
+            "type": "blob",
+            "direction": "out",
+            "path": "srfiles/files_table",
             "connection": "SRBlobStorageConnection"
         }
     ],

@@ -11,11 +11,10 @@ import { getRequestBody, RequestBodyDto } from './getRequestBody';
 
 import { expectAndGet } from '../Shared';
 
-const blobTrigger: AzureFunction = async (context: Context, myBlob: any): Promise<void> => {
+const blobTrigger: AzureFunction = async (context: Context): Promise<void> => {
     context.log(`
         Blob trigger function processed blob 
         Name:' ${context.bindingData.name},
-        Blob Size: ${myBlob.length},
     `);
 
     context.log(context.bindingData);
@@ -69,6 +68,15 @@ const blobTrigger: AzureFunction = async (context: Context, myBlob: any): Promis
             'Ocp-Apim-Subscription-Key': srServiceSubscriptionKey,
         },
     });
+
+    const location = expectAndGet<string>(result.headers.location, 'location header not found');
+
+    const filesTable = JSON.parse(context.bindings.filesTable || '{}');
+
+    return {
+        [context.bindingData.name]: location.substring(location.lastIndexOf('/')),
+        ...filesTable,
+    };
 };
 
 export default blobTrigger;
