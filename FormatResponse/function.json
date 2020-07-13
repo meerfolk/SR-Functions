@@ -15,5 +15,5 @@
             "connection": "SRBlobStorageConnection"
         }
     ],
-    "scriptFile": "../dist/ConvertToText/index.js"
+    "scriptFile": "../dist/FormatResponse/index.js"
 }

@@ -9,10 +9,10 @@ import axios from 'axios';
 
 import { getRequestBody, RequestBodyDto } from './getRequestBody';
 
-import { expectAndGet } from '../Shared';
+import { expectAndGet, tryCatchLogWrapper } from '../Shared';
 import { getUUIDFromUrl } from './getUUIDFromUrl';
 
-const blobTrigger: AzureFunction = async (context: Context): Promise<void> => {
+const blobTrigger: AzureFunction = async (context: Context): Promise<string> => {
     context.log(`
         Blob trigger function processed blob 
         Name:' ${context.bindingData.name},
@@ -70,13 +70,22 @@ const blobTrigger: AzureFunction = async (context: Context): Promise<void> => {
 
     const location = expectAndGet<string>(result.headers.location, 'location header not found');
 
-    const filesTable = JSON.parse(context.bindings.filesTable || '{}');
+    const filesTable = tryCatchLogWrapper(
+        context,
+        () => JSON.parse(context.bindings.filesTable || '{}'),
+        'Fail to parse files table ',
+    );
     const srUuid = getUUIDFromUrl(location);
 
-    return {
-        [srUuid]: context.bindingData.name,
-        ...filesTable,
-    };
+    return tryCatchLogWrapper(
+        context,
+        () =>
+            JSON.stringify({
+                [srUuid]: context.bindingData.name,
+                ...filesTable,
+            }),
+        'Fail to stringify files table',
+    );
 };
 
 export default blobTrigger;

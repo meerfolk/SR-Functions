@@ -1,7 +1,7 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import { AzureFunction, Context } from '@azure/functions';
 
-import { expectAndGet, tryCatchLogWrapper } from '../Shared';
+import { expectAndGet } from '../Shared';
 import { getUUIDFromFileName } from './getUUIDFromFileName';
 
 type Result = {
@@ -12,17 +12,11 @@ type Result = {
     };
 };
 const blobTrigger: AzureFunction = async (context: Context, myBlob: Result): Promise<void> => {
-    const fileTable = tryCatchLogWrapper<Record<string, string>>(
-        context,
-        () => JSON.parse(context.bindings.fileTable),
-        'Fail to parse files table',
-    );
-
     const blobName = expectAndGet<string>(context.bindingData.name, 'Blob name required');
 
     const srUuid = getUUIDFromFileName(blobName);
 
-    const txtBlobName = expectAndGet(fileTable[srUuid], `Can't find record ${srUuid} if file table`);
+    const txtBlobName = expectAndGet(context.bindings.filesTable[srUuid], `Can't find record ${srUuid} if file table`);
 
     const blobStorageAccount = expectAndGet<string>(
         process.env.SRBlobStorageAccount,
